@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIÁRIO SSBC — Serra Smash Badminton Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ==========================================================================
+       TELA DE LOGIN E AUTENTICAÇÃO DO DIÁRIO SSBC
+       ========================================================================== -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <img src="public/images/logo-ssbc.png" alt="Logo SSBC" class="auth-logo">
+        <span class="auth-badge">Portal Oficial • Área Restrita</span>
+        <h2 class="auth-title">DIÁRIO SSBC</h2>
+        <p class="auth-subtitle">Serra Smash Badminton Club — Vieirópolis-PB</p>
+      </div>
+
+      <!-- Formulário de Login -->
+      <form id="loginForm" class="auth-form">
+        <div class="form-group full-width">
+          <label for="loginEmail" class="form-label required">E-mail Institucional:</label>
+          <div class="input-with-icon">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="loginEmail" class="form-input form-input-lg" required placeholder="treinador@ssbc.com.br" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+            <label for="loginPassword" class="form-label required" style="margin-bottom:0;">Senha:</label>
+            <button type="button" class="btn-link" id="btnForgotPass">Esqueci minha senha</button>
+          </div>
+          <div class="input-with-icon">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="loginPassword" class="form-input form-input-lg" required placeholder="Digite sua senha" autocomplete="current-password">
+            <button type="button" class="btn-toggle-eye" id="togglePasswordVisibility" title="Mostrar/ocultar senha">👁️</button>
+          </div>
+        </div>
+
+        <div id="authErrorMsg" class="auth-feedback-msg" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnLoginSubmit">
+          <span class="btn-icon">⚡</span> Entrar no Diário
+        </button>
+
+        <div class="auth-divider">
+          <span>Primeiro acesso ao clube?</span>
+        </div>
+
+        <button type="button" class="btn btn-outline-primary btn-block btn-lg" id="btnAdminSetupInfo">
+          Criar conta
+        </button>
+
+        <div class="auth-card-footer">
+          <p class="auth-security-note">
+            🛡️ Acesso restrito a professores, treinadores e equipe técnica autorizada.
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RECUPERAÇÃO DE SENHA -->
+  <div class="modal-overlay" id="forgotModal" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="public/images/logo-ssbc.png" alt="Logo SSBC" style="width: 32px; height: 32px; object-fit: contain;">
+          <div>
+            <h3 class="modal-title">Recuperar Senha</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Serra Smash Badminton Club</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="window.SSBC_AUTH.closeForgotModal()">✕</button>
+      </div>
+      <form id="forgotForm" class="modal-form">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Digite seu e-mail cadastrado. Um link seguro de redefinição de senha será enviado pelo Firebase Authentication.
+        </p>
+        <div class="form-group full-width">
+          <label for="forgotEmail" class="form-label required">E-mail Cadastrado:</label>
+          <input type="email" id="forgotEmail" class="form-input" required placeholder="treinador@ssbc.com.br">
+        </div>
+        <div id="forgotStatusMsg" class="auth-feedback-msg" style="display: none;"></div>
+        <div class="modal-footer" style="padding: 1rem 0 0 0; background: transparent;">
+          <button type="button" class="btn btn-secondary" onclick="window.SSBC_AUTH.closeForgotModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Enviar Link de Recuperação</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: INSTRUÇÕES DE SOLICITAÇÃO DE ACESSO AO DIÁRIO (DIRETORIA / COORDENAÇÃO) -->
+  <div class="modal-overlay" id="adminSetupModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="public/images/logo-ssbc.png" alt="Logo SSBC" style="width: 36px; height: 36px; object-fit: contain;">
+          <div>
+            <h3 class="modal-title">Solicitação de Acesso ao Diário</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Serra Smash Badminton Club</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="window.SSBC_AUTH.closeAdminSetupModal()">✕</button>
+      </div>
+      <div class="modal-form">
+        <div class="security-banner">
+          <span style="font-size: 1.4rem;">🏸</span>
+          <p style="font-size: 0.82rem; margin: 0; line-height: 1.4;">
+            <strong>Ambiente Restrito:</strong> O DIÁRIO SSBC é uma plataforma de gestão esportiva restrita à comissão técnica.
+          </p>
+        </div>
+
+        <div style="font-size: 0.88rem; color: var(--text-main); line-height: 1.5; margin-bottom: 1.25rem;">
+          <p style="margin-bottom: 0.75rem;">
+            Para garantir a segurança dos dados e o cumprimento das normas do clube, <strong>não é permitido o auto-cadastro de usuários</strong>.
+          </p>
+          <p style="margin-bottom: 0;">
+            Para solicitar a criação de sua conta ou cadastramento de treinador, procure a <strong>Diretoria ou Coordenação Esportiva do SSBC</strong>. Seu usuário será provisionado e vinculado diretamente no sistema oficial.
+          </p>
+        </div>
+
+        <div class="modal-footer" style="padding: 1rem 0 0 0; background: transparent;">
+          <button type="button" class="btn btn-primary" onclick="window.SSBC_AUTH.closeAdminSetupModal()">Entendi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cabeçalho Principal (Apenas visível após autenticação) -->
+  <header class="app-header" id="appHeader" style="display: none;">
+    <div class="header-container">
+      <div class="brand-group">
+        <img src="public/images/logo-ssbc.png" alt="Logo SSBC" class="app-logo" id="headerLogo">
+        <div class="brand-titles">
+          <span class="brand-badge">Sistema Oficial de Gestão</span>
+          <h1 class="brand-name">DIÁRIO SSBC</h1>
+          <p class="brand-sub">Serra Smash Badminton Club</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="year-selector-badge" title="Ano Letivo Ativo">
+          <span class="label">Ano Letivo:</span>
+          <select id="activeYearSelect" class="year-select" aria-label="Selecione o ano letivo"></select>
+        </div>
+        <button id="themeToggleBtn" class="btn-icon" title="Alternar Modo Escuro/Claro" aria-label="Alternar tema">
+          🌓
+        </button>
+        <button id="btnLogoutBtn" class="btn btn-sm btn-outline-danger" title="Encerrar Sessão">
+          🚪 Sair
+        </button>
+        <button id="mobileMenuBtn" class="mobile-toggle-btn" aria-label="Abrir menu de navegação">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Navegação (Apenas visível após autenticação) -->
+  <nav class="app-navbar" id="appNavbar" style="display: none;">
+    <div class="nav-container">
+      <button class="nav-link active" data-tab="dashboard" id="nav-dashboard">
+        <span class="nav-icon">📊</span>
+        <span>Painel Inicial</span>
+      </button>
+      <button class="nav-link" data-tab="students" id="nav-students">
+        <span class="nav-icon">🏸</span>
+        <span>Alunos</span>
+      </button>
+      <button class="nav-link" data-tab="attendance" id="nav-attendance">
+        <span class="nav-icon">📝</span>
+        <span>Frequência</span>
+      </button>
+      <button class="nav-link" data-tab="calendar" id="nav-calendar">
+        <span class="nav-icon">📅</span>
+        <span>Calendário Anual</span>
+      </button>
+      <button class="nav-link" data-tab="reports" id="nav-reports">
+        <span class="nav-icon">📈</span>
+        <span>Relatórios</span>
+      </button>
+      <button class="nav-link" data-tab="backup" id="nav-backup">
+        <span class="nav-icon">💾</span>
+        <span>Backup & Dados</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Área Principal (Protegida - Apenas visível após autenticação) -->
+  <main class="main-content" id="mainContent" style="display: none;">
+
+    <!-- ABA 1: PAINEL INICIAL (DASHBOARD) -->
+    <section id="tab-dashboard" class="tab-pane active">
+      <div class="hero-card">
+        <div class="hero-content">
+          <div class="hero-text">
+            <span class="hero-chip">Bem-vindo ao Diário de Treino</span>
+            <h2 class="hero-title">Serra Smash Badminton Club</h2>
+            <p class="hero-desc">Controle integrado de frequência, assiduidade, calendários esportivos e fichas completas com fotos dos atletas.</p>
+            <div class="hero-quick-actions">
+              <button class="btn btn-primary" onclick="window.SSBC.switchTab('attendance')">
+                <span class="btn-icon">⚡</span> Fazer Chamada Hoje
+              </button>
+              <button class="btn btn-secondary" onclick="window.SSBC.openStudentModal()">
+                <span class="btn-icon">➕</span> Novo Aluno
+              </button>
+              <button class="btn btn-outline" onclick="window.SSBC.switchTab('reports')">
+                <span class="btn-icon">📄</span> Gerar Relatório
+              </button>
+            </div>
+          </div>
+          <div class="hero-emblem-wrap">
+            <img src="public/images/logo-ssbc.png" alt="Emblema SSBC" class="hero-emblem">
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas / KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon bg-green">👥</div>
+          <div class="kpi-info">
+            <span class="kpi-title">Alunos Ativos</span>
+            <span class="kpi-value" id="kpiActiveStudents">0</span>
+            <span class="kpi-sub" id="kpiTotalStudents">de 0 cadastrados</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon bg-yellow">🏸</div>
+          <div class="kpi-info">
+            <span class="kpi-title">Treinos no Ano</span>
+            <span class="kpi-value" id="kpiTotalSessions">0</span>
+            <span class="kpi-sub" id="kpiYearLabel">Temporada 2026</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon bg-green-light">🎯</div>
+          <div class="kpi-info">
+            <span class="kpi-title">Taxa Média de Presença</span>
+            <span class="kpi-value" id="kpiOverallAttendance">0%</span>
+            <span class="kpi-sub">Frequência geral</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon bg-dark">📅</div>
+          <div class="kpi-info">
+            <span class="kpi-title">Hoje (<span id="kpiTodayDate">--/--</span>)</span>
+            <span class="kpi-value" id="kpiTodayCount">0</span>
+            <span class="kpi-sub" id="kpiTodaySub">Presentes confirmados</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painéis Divididos: Frequência Rápida & Destaques de Assiduidade -->
+      <div class="dashboard-grid">
+        <div class="card card-recent">
+          <div class="card-header">
+            <h3 class="card-title">🏸 Próximos / Recentes Dias de Treino</h3>
+            <button class="btn btn-sm btn-ghost" onclick="window.SSBC.switchTab('calendar')">Ver Calendário</button>
+          </div>
+          <div class="card-body" id="dashboardRecentSessions">
+            <!-- Injetado dinamicamente -->
+          </div>
+        </div>
+
+        <div class="card card-ranking">
+          <div class="card-header">
+            <h3 class="card-title">🏆 Top Atletas Mais Assíduos</h3>
+            <button class="btn btn-sm btn-ghost" onclick="window.SSBC.switchTab('reports')">Ver Ranking Completo</button>
+          </div>
+          <div class="card-body" id="dashboardTopStudents">
+            <!-- Injetado dinamicamente -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 2: ALUNOS -->
+    <section id="tab-students" class="tab-pane">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Quadro de Alunos & Atletas</h2>
+          <p class="section-sub">Fichas cadastrais, fotos dos atletas, turmas e situação de matrícula.</p>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="window.SSBC.openStudentModal()">
+            <span class="btn-icon">➕</span> Cadastrar Aluno
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros e Busca -->
+      <div class="filters-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="studentSearchInput" placeholder="Buscar por nome ou responsável..." class="input-search">
+        </div>
+        <div class="filters-group">
+          <select id="studentFilterTurma" class="filter-select">
+            <option value="ALL">Todas as Turmas</option>
+            <option value="Iniciante">Iniciante</option>
+            <option value="Intermediário">Intermediário</option>
+            <option value="Avançado / Alto Rendimento">Avançado / Alto Rendimento</option>
+            <option value="Infantil">Infantil</option>
+          </select>
+          <select id="studentFilterStatus" class="filter-select">
+            <option value="ALL">Todas as Situações</option>
+            <option value="Ativo" selected>Somente Ativos</option>
+            <option value="Inativo">Somente Inativos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grid de Cartões de Alunos -->
+      <div class="students-grid" id="studentsContainer">
+        <!-- Injetado via Javascript -->
+      </div>
+    </section>
+
+    <!-- ABA 3: FREQUÊNCIA DIÁRIA (CHAMADA) -->
+    <section id="tab-attendance" class="tab-pane">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Registro Diário de Frequência</h2>
+          <p class="section-sub">Chamada diária por turma com foto do atleta para identificação visual ágil.</p>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-outline" id="btnMarkAllPresent">
+            ✅ Marcar Todos Presentes
+          </button>
+          <button class="btn btn-primary" id="btnSaveAttendance">
+            💾 Salvar Frequência
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros da Chamada -->
+      <div class="attendance-control-panel">
+        <div class="control-item">
+          <label for="attendanceDateInput" class="control-label">Data da Chamada:</label>
+          <input type="date" id="attendanceDateInput" class="input-control">
+        </div>
+        <div class="control-item">
+          <label for="attendanceTurmaSelect" class="control-label">Turma:</label>
+          <select id="attendanceTurmaSelect" class="input-control">
+            <option value="ALL">Todas as Turmas</option>
+            <option value="Iniciante">Iniciante</option>
+            <option value="Intermediário">Intermediário</option>
+            <option value="Avançado / Alto Rendimento">Avançado / Alto Rendimento</option>
+            <option value="Infantil">Infantil</option>
+          </select>
+        </div>
+        <div class="attendance-status-summary">
+          <span class="badge-status-counter badge-present"><span id="countPresent">0</span> Presentes</span>
+          <span class="badge-status-counter badge-absent"><span id="countAbsent">0</span> Ausentes</span>
+          <span class="badge-status-counter badge-justified"><span id="countJustified">0</span> Justificados</span>
+        </div>
+      </div>
+
+      <!-- Lista da Chamada com Foto -->
+      <div class="attendance-table-card">
+        <div class="attendance-list" id="attendanceListContainer">
+          <!-- Injetado dinamicamente -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 4: CALENDÁRIO ANUAL -->
+    <section id="tab-calendar" class="tab-pane">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Calendário Esportivo Anual</h2>
+          <p class="section-sub">Detecção automática do ano corrente, navegação por anos anteriores e mapeamento de treinos.</p>
+        </div>
+        <div class="calendar-controls">
+          <button class="btn btn-outline btn-sm" id="btnPrevMonth">◀ Anterior</button>
+          <span class="calendar-month-indicator" id="currentMonthYearLabel">Outubro 2026</span>
+          <button class="btn btn-outline btn-sm" id="btnNextMonth">Próximo ▶</button>
+          <button class="btn btn-secondary btn-sm" id="btnGoCurrentMonth">Mês Atual</button>
+        </div>
+      </div>
+
+      <div class="calendar-layout">
+        <!-- Visualização de Grade Mensal -->
+        <div class="calendar-grid-card">
+          <div class="weekdays-header">
+            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+          </div>
+          <div class="calendar-days-grid" id="calendarDaysGrid">
+            <!-- Dias gerados via script -->
+          </div>
+        </div>
+
+        <!-- Painel Lateral de Detalhes do Dia Selecionado -->
+        <div class="calendar-day-details-card">
+          <div class="card-header">
+            <h3 class="card-title" id="selectedDateTitle">Selecione um dia</h3>
+          </div>
+          <div class="card-body" id="selectedDateBody">
+            <p class="text-muted">Clique em qualquer dia do calendário para ver o status, taxa de presença ou cadastrar um treino/evento.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 5: RELATÓRIOS -->
+    <section id="tab-reports" class="tab-pane">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Relatórios & Assiduidade</h2>
+          <p class="section-sub">Estatísticas mensais e anuais, gráficos, ranking de presença e impressão oficial.</p>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-primary" id="btnPrintReportBtn">
+            🖨️ Exportar / Imprimir PDF Oficial
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros de Relatório -->
+      <div class="report-filters">
+        <div class="control-item">
+          <label for="reportTypeSelect" class="control-label">Tipo de Relatório:</label>
+          <select id="reportTypeSelect" class="input-control">
+            <option value="monthly">Resumo Mensal</option>
+            <option value="annual">Consolidado Anual</option>
+            <option value="ranking">Ranking de Frequência</option>
+          </select>
+        </div>
+        <div class="control-item" id="reportMonthWrap">
+          <label for="reportMonthSelect" class="control-label">Mês de Referência:</label>
+          <select id="reportMonthSelect" class="input-control">
+            <option value="0">Janeiro</option>
+            <option value="1">Fevereiro</option>
+            <option value="2">Março</option>
+            <option value="3">Abril</option>
+            <option value="4">Maio</option>
+            <option value="5">Junho</option>
+            <option value="6">Julho</option>
+            <option value="7">Agosto</option>
+            <option value="8">Setembro</option>
+            <option value="9">Outubro</option>
+            <option value="10">Novembro</option>
+            <option value="11">Dezembro</option>
+          </select>
+        </div>
+        <div class="control-item">
+          <label for="reportTurmaSelect" class="control-label">Filtrar Turma:</label>
+          <select id="reportTurmaSelect" class="input-control">
+            <option value="ALL">Todas as Turmas</option>
+            <option value="Iniciante">Iniciante</option>
+            <option value="Intermediário">Intermediário</option>
+            <option value="Avançado / Alto Rendimento">Avançado / Alto Rendimento</option>
+            <option value="Infantil">Infantil</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Folha Oficial de Relatório (Visível na tela e configurada para Impressão limpa) -->
+      <div class="report-paper-container" id="printableReportArea">
+        <div class="official-print-header">
+          <img src="public/images/logo-ssbc.png" alt="Logo SSBC" class="official-print-logo">
+          <div class="official-print-title">
+            <h2>DIÁRIO SSBC — Serra Smash Badminton Club</h2>
+            <p>Relatório de Frequência & Assiduidade de Treinos</p>
+            <div class="official-print-meta" id="reportHeaderMeta">Ano Letivo: 2026 | Período: Outubro</div>
+          </div>
+        </div>
+
+        <div class="report-summary-stats" id="reportSummaryStats">
+          <!-- Métricas do relatório -->
+        </div>
+
+        <!-- Tabela do Relatório -->
+        <div class="table-responsive">
+          <table class="report-table" id="reportTable">
+            <thead id="reportTableHead">
+              <!-- Cabeçalho dinâmico -->
+            </thead>
+            <tbody id="reportTableBody">
+              <!-- Dados dinâmicos -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="official-print-footer">
+          <div class="sign-line">
+            <div class="line"></div>
+            <span>Coordenação Esportiva SSBC</span>
+          </div>
+          <div class="sign-line">
+            <div class="line"></div>
+            <span>Professor / Treinador Responsável</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 6: BACKUP & DADOS -->
+    <section id="tab-backup" class="tab-pane">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Gerenciamento de Dados & Backup</h2>
+          <p class="section-sub">Segurança total com exportação/importação JSON incluindo fotos comprimidas e isolamento por ano.</p>
+        </div>
+      </div>
+
+      <div class="backup-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📦 Exportar Backup Completo</h3>
+          </div>
+          <div class="card-body">
+            <p>Faça o download do arquivo JSON com todos os alunos, histórico de presenças e fotos otimizadas para proteger seus dados contra limpeza de navegador.</p>
+            <div class="backup-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="backupIncludePhotos" checked>
+                <span>Incluir fotos dos atletas no arquivo de backup</span>
+              </label>
+            </div>
+            <button class="btn btn-primary" id="btnExportBackup">
+              ⬇️ Baixar Backup (.json)
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📥 Restaurar Backup</h3>
+          </div>
+          <div class="card-body">
+            <p>Selecione um arquivo de backup (.json) exportado anteriormente pelo Diário SSBC para restaurar alunos e presenças.</p>
+            <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+            <button class="btn btn-secondary" onclick="document.getElementById('importBackupInput').click()">
+              ⬆️ Selecionar Arquivo de Backup
+            </button>
+            <div id="importStatus" class="backup-status-msg"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🛡️ Integridade e Privacidade</h3>
+          </div>
+          <div class="card-body">
+            <ul class="info-list">
+              <li><strong>Isolamento por Ano:</strong> Os registros são particionados pelo ano letivo selecionado (ex: <code>ssbc_attendance_2026</code>), evitando sobrescrita de históricos anteriores.</li>
+              <li><strong>Compressão de Imagens:</strong> As fotos são redimensionadas para max 300px com compressão JPEG para evitar estouro de limite do LocalStorage.</li>
+              <li><strong>LGPD & Menores de Idade:</strong> O sistema contém termo de autorização dos pais/responsáveis para uso de imagem interna nas fichas e chamada de quadra.</li>
+            </ul>
+            <button class="btn btn-outline btn-sm" id="btnLoadSampleData">
+              🏸 Carregar Dados de Demonstração (Treinos do SSBC)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: CADASTRAR / EDITAR ALUNO COM FOTO -->
+  <div class="modal-overlay" id="studentModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="public/images/logo-ssbc.png" alt="Logo SSBC" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;">
+          <div>
+            <h3 class="modal-title" id="studentModalTitle">Cadastrar Aluno</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Serra Smash Badminton Club</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="window.SSBC.closeStudentModal()">✕</button>
+      </div>
+      <form id="studentForm" class="modal-form">
+        <input type="hidden" id="studentEditId">
+
+        <!-- Área de Foto com Preview e Compressão -->
+        <div class="photo-upload-section">
+          <div class="photo-preview-wrap">
+            <img id="photoPreviewImg" src="" alt="Avatar Padrão" class="student-avatar-lg">
+            <div class="photo-overlay-actions">
+              <label for="studentPhotoInput" class="btn btn-sm btn-primary photo-upload-btn">
+                📷 Escolher Foto
+              </label>
+              <button type="button" id="btnRemovePhoto" class="btn btn-sm btn-danger" style="display: none;">
+                🗑️ Remover
+              </button>
+            </div>
+            <input type="file" id="studentPhotoInput" accept="image/*" style="display: none;">
+          </div>
+          <div class="photo-hints">
+            <small class="text-muted">A foto é compactada automaticamente antes de salvar. Suporta celular ou computador.</small>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="studentName" class="form-label required">Nome Completo do Aluno:</label>
+            <input type="text" id="studentName" class="form-input" required placeholder="Ex: Lucas Gabriel Oliveira">
+          </div>
+
+          <div class="form-group">
+            <label for="studentBirthDate" class="form-label required">Data de Nascimento:</label>
+            <input type="date" id="studentBirthDate" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label for="studentTurma" class="form-label required">Turma / Categoria:</label>
+            <select id="studentTurma" class="form-input" required>
+              <option value="Iniciante">Iniciante</option>
+              <option value="Intermediário">Intermediário</option>
+              <option value="Avançado / Alto Rendimento">Avançado / Alto Rendimento</option>
+              <option value="Infantil">Infantil</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="studentEntryDate" class="form-label required">Data de Entrada no SSBC:</label>
+            <input type="date" id="studentEntryDate" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label for="studentStatus" class="form-label required">Situação:</label>
+            <select id="studentStatus" class="form-input" required>
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="studentGuardianName" class="form-label">Nome do Responsável:</label>
+            <input type="text" id="studentGuardianName" class="form-input" placeholder="Obrigatório para menores">
+          </div>
+
+          <div class="form-group">
+            <label for="studentGuardianPhone" class="form-label">Telefone / WhatsApp de Contato:</label>
+            <input type="tel" id="studentGuardianPhone" class="form-input" placeholder="(27) 99999-9999">
+          </div>
+
+          <div class="form-group full-width">
+            <label class="checkbox-container">
+              <input type="checkbox" id="studentPhotoConsent" checked>
+              <span>Termo de autorização de imagem para uso interno no SSBC assinado pelo atleta ou responsável.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.SSBC.closeStudentModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Aluno</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PERFIL DO ATLETA -->
+  <div class="modal-overlay" id="profileModal" aria-hidden="true">
+    <div class="modal-dialog modal-profile">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="public/images/logo-ssbc.png" alt="Logo SSBC" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;">
+          <div>
+            <h3 class="modal-title">Ficha do Atleta</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Serra Smash Badminton Club</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="window.SSBC.closeProfileModal()">✕</button>
+      </div>
+      <div class="profile-card-content" id="profileModalContent">
+        <!-- Injetado dinamicamente -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.SSBC.closeProfileModal()">Fechar</button>
+        <button type="button" class="btn btn-primary" id="btnEditFromProfile">Editar Dados</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST / NOTIFICAÇÃO -->
+  <div id="toastNotification" class="toast"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
